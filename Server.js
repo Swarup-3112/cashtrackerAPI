@@ -29,6 +29,30 @@ app.get("/hello", (req, res) => {
   res.send("hello");
 });
 
+//login post
+app.post("/signIn", async (req, res) => {
+  let response = { status: false, message: "" };
+  const { email, password } = req.body;
+  await User.find({ email })
+    .then((data) => {
+      if (data == undefined) {
+        response.message = "Failed to signIn , please try again";
+        res.status(400).send(response);
+      }
+      if (password === data.password) {
+        response.message = "login successful";
+        res.status(200).send(response);
+      } else {
+        response.message = "incorrect password , please try again";
+        res.status(401).send(response);
+      }
+    })
+    .catch((e) => {
+      response.message = "Failed to signIn , please try again";
+      res.status(401).send(response);
+    });
+});
+
 //post budget api
 app.post("/budget", (req, res) => {
   let response = { status: false, message: "" };
