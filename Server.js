@@ -50,7 +50,6 @@ app.post("/budget", (req, res) => {
     const d = new Date();
     let name = month[d.getMonth()];
     let year = d.getFullYear();
-    console.log(req.body);
     const { category, amount } = req.body;
     userId = "61e137d188086b0f5577acdc"; // Todo: body mai lelo
     const data = new Budget({
@@ -58,6 +57,7 @@ app.post("/budget", (req, res) => {
       amount,
       createdBy: userId,
       month: name,
+      date: new Date().toISOString().slice(0, 10),
       year,
     });
     data.save();
@@ -166,17 +166,23 @@ app.get("/", async (req, res) => {
   let totalBudget = 0,
     i;
   try {
-    const { date } = req.body;
-    const data = await Budget.find({ createdBy: date }).select(
+    // const { date } = req.body
+    userId = "61e137d188086b0f5577acdc"; // Todo: body mai lelo
+    let today = new Date().toISOString().slice(0, 10);
+    const data = await Budget.find({ date: today, createdBy: userId }).select(
       "category amount"
     );
-    for (i = 0; i < data.length; i++) totalBudget += data.amount;
+    for (i = 0; i < data.length; i++) {
+      totalBudget += data[i].amount;
+    }
     response.status = true;
     response.data.budget = data;
     response.data.total = totalBudget;
     response.message = "Budget created successfully";
+    console.log(response.data, "data");
     res.status(200).send(response);
   } catch (error) {
+    console.log(error, "error");
     response.errMessage = error.message;
     response.message = "Failed to get daily expense , please try again";
     res.status(400).send(response);
