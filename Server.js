@@ -29,6 +29,30 @@ app.get("/hello", (req, res) => {
   res.send("hello");
 });
 
+//signup post
+app.post("/signup", async (req, res) => {
+  try {
+    const { name, email, password, phNumber } = req.body;
+    const data = await User.find({ email });
+    if (data) {
+      response.message = "Email already exist";
+      return res.status(400).send(response);
+    } else {
+      const user = new User({
+        name,
+        email,
+        password,
+        phNumber,
+      });
+      response.message = "User registered successfully";
+      return res.status(200).send(response);
+    }
+  } catch {
+    response.message = "Failed to register , please try again";
+    return res.status(400).send(response);
+  }
+});
+
 //login post
 app.post("/signIn", async (req, res) => {
   let response = { status: false, message: "" };
@@ -37,20 +61,45 @@ app.post("/signIn", async (req, res) => {
     .then((data) => {
       if (data == undefined) {
         response.message = "Failed to signIn , please try again";
-        res.status(400).send(response);
+        return res.status(400).send(response);
       }
       if (password === data.password) {
         response.message = "login successful";
-        res.status(200).send(response);
+        return res.status(200).send(response);
       } else {
         response.message = "incorrect password , please try again";
-        res.status(401).send(response);
+        return res.status(401).send(response);
       }
     })
     .catch((e) => {
       response.message = "Failed to signIn , please try again";
-      res.status(401).send(response);
+      return res.status(401).send(response);
     });
+});
+
+//get profile
+app.get("/", async (req, res) => {
+  let response = {
+    status: false,
+    data: "",
+  };
+  try {
+    // const { date } = req.body
+    userId = "61e137d188086b0f5577acdc"; // Todo: body mai lelo
+    const data = await User.findOne({ _id: userId });
+    if (data) {
+      response.status = true;
+      response.data = data;
+      return res.status(200).send(response);
+    } else {
+      response.message = "could not get the user , please try again";
+      return res.status(400).send(response);
+    }
+  } catch (error) {
+    response.errMessage = error.message;
+    response.message = "could not get the user , please try again";
+    return res.status(400).send(response);
+  }
 });
 
 //post budget api
@@ -87,11 +136,11 @@ app.post("/budget", (req, res) => {
     data.save();
     response.status = true;
     response.message = "Budget created successfully";
-    res.status(201).send(response);
+    return res.status(201).send(response);
   } catch (error) {
     response.errMessage = error.message;
     response.message = "Failed to create , please try again";
-    res.status(400).send(response);
+    return res.status(400).send(response);
   }
 });
 

@@ -11,8 +11,9 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    dob: {
-      type: Date,
+    phNumber: {
+      type: Number,
+      required: true,
     },
     income: [
       {
