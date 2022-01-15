@@ -92,6 +92,8 @@ app.get("/user/:userId", async (req, res) => {
     if (data) {
       response.status = true;
       response.data = data;
+      response.data.income = "$"+data.income;
+      console.log(response.data)
       return res.status(200).send(response);
     } else {
       response.message = "could not get the user , please try again";
@@ -156,7 +158,7 @@ app.post("/payment", async (req, res) => {
     { name: "Charity", icon: "assets/images/charity.png" },
     { name: "Eating", icon: "assets/images/eating.png" },
     { name: "Gift", icon: "assets/images/gift.png" },
-    { name: "Money Transferred", icon: "assets/images/gift.png" },
+    { name: "Money Transferred", icon: "assets/images/cash.png" },
   ];
   const monthConst = [
     "Jan",
@@ -177,7 +179,7 @@ app.post("/payment", async (req, res) => {
     let day = d.getDate();
     let month = monthConst[d.getMonth()];
     let year = d.getFullYear();
-    const { category, amount, phone, userId } = req.body;
+    const { category, amount, phone, userId, bool } = req.body;
     const payments = new Payment({
       category: categories[category].name,
       amount,
@@ -189,6 +191,12 @@ app.post("/payment", async (req, res) => {
       createdBy: userId,
     });
     await payments.save();
+    if(bool == true){
+      let user = await User.findOne({ _id: userId });
+      user.income += `-${amount}`;
+      user.income = eval(user.income);
+      await user.save();
+    }
     response.status = true;
     response.message = "Payment created successfully";
     res.status(201).send(response);
