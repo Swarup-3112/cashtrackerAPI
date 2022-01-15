@@ -178,7 +178,7 @@ app.post("/payment", async (req, res) => {
     let month = monthConst[d.getMonth()];
     let year = d.getFullYear();
     const { category, amount, phone, userId } = req.body;
-    const payment = new Payment({
+    const payments = new Payment({
       category: categories[category].name,
       amount,
       phone,
@@ -188,14 +188,14 @@ app.post("/payment", async (req, res) => {
       year,
       createdBy: userId,
     });
-    await payment.save();
+    await payments.save();
     response.status = true;
     response.message = "Payment created successfully";
     res.status(201).send(response);
   } catch (error) {
     console.log(error);
     response.errMessage = error.message;
-    response.message = "Failed to create payment , please try again";
+    response.message = "Failed to create payments , please try again";
     res.status(400).send(response);
   }
 });
@@ -294,23 +294,112 @@ app.get("/stats", async (req, res) => {
 app.get("/monthlyExpense", async (req, res) => {
   let response = {
     status: false,
-    data: {
-      budget: "",
-      income: 0,
-      expense: 0,
-      total: 0,
-    },
+    payment: [],
   };
+  let payments = [
+    {
+      category: "Auto",
+      Total: 0,
+      Percentage: 0,
+      PercentageLabel: 0,
+      Budget: 0,
+    },
+    {
+      category: "Bank",
+      Total: 0,
+      Percentage: 0,
+      PercentageLabel: 0,
+      Budget: 0,
+    },
+    {
+      category: "Cash",
+      Total: 0,
+      Percentage: 0,
+      PercentageLabel: 0,
+      Budget: 0,
+    },
+    {
+      category: "Charity",
+      Total: 0,
+      Percentage: 0,
+      PercentageLabel: 0,
+      Budget: 0,
+    },
+    {
+      category: "Eating",
+      Total: 0,
+      Percentage: 0,
+      PercentageLabel: 0,
+      Budget: 0,
+    },
+    {
+      category: "Gift",
+      Total: 0,
+      Percentage: 0,
+      PercentageLabel: 0,
+      Budget: 0,
+    },
+  ];
   try {
     const { month, userId } = req.body;
-    const user = await User.find({ _id: userId }).select("income payment");
-    income = user.income.filter((item) => item.month === month);
-    payment = user.payment.filter((item) => item.month === month);
+    const payment = await Payment.find({ createdBy: userId, month }).select(
+      "category amount"
+    );
+    const budget = await Budget.find({ createdBy: userId, month }).select(
+      "category amount"
+    );
+    for (let i = 0; i < payment.length; i++) {
+      if (payment[i].category === "Auto") {
+        payments[0].Total += parseInt(payment[i].amount);
+      } else if (payment[i].category === "Bank") {
+        payments[1].Total += parseInt(payment[i].amount);
+      } else if (payment[i].category === "Cash") {
+        payments[2].Total += parseInt(payment[i].amount);
+      } else if (payment[i].category === "Charity") {
+        payments[3].Total += parseInt(payment[i].amount);
+      } else if (payment[i].category === "Eating") {
+        payments[4].Total += parseInt(payment[i].amount);
+      } else if (payment[i].category === "Gift") {
+        payments[5].Total += parseInt(payment[i].amount);
+      }
+    }
+    for (let i = 0; i < budget.length; i++) {
+      if (budget[i].category === "Auto") {
+        payments[0].Percentage += (payments[0].Total / budget[i].amount) * 100;
+        payments[0].PercentageLabel += payments[0].Total / budget[i].amount;
+        payments[0].Budget = parseInt(budget[i].amount);
+      } else if (budget[i].category === "Bank") {
+        payments[1].Percentage += (payments[1].Total / budget[i].amount) * 100;
+        payments[1].PercentageLabel += payments[1].Total / budget[i].amount;
+        payments[1].Budget = parseInt(budget[i].amount);
+      } else if (budget[i].category === "Cash") {
+        payments[2].Percentage += (payments[2].Total / budget[i].amount) * 100;
+        payments[2].PercentageLabel += payments[2].Total / budget[i].amount;
+        payments[2].Budget = parseInt(budget[i].amount);
+      } else if (budget[i].category === "Charity") {
+        payments[3].Budget += parseInt(budget[i].amount);
+        payments[3].Percentage += (payments[3].Total / budget[i].amount) * 100;
+        payments[3].PercentageLabel += payments[3].Total / budget[i].amount;
+      } else if (budget[i].category === "Eating") {
+        payments[4].Budget = parseInt(budget[i].amount);
+        payments[4].Percentage += (payments[4].Total / budget[i].amount) * 100;
+        payments[4].PercentageLabel += payments[4].Total / budget[i].amount;
+      } else if (budget[i].category === "Gift") {
+        payments[5].Budget = parseInt(budget[i].amount);
+        payments[5].Percentage += (payments[5].Total / budget[i].amount) * 100;
+        payments[5].Percentage += payments[5].Total / budget[i].amount;
+      }
+    }
+
+    for (let i = 0; i < payments.length; i++) {
+      if (payments[i].Budget != 0) {
+        response.payment.push(payments[i]);
+      }
+    }
     response.status = true;
-    response.data.income = income;
-    response.data.payment = payment;
     res.status(200).send(response);
   } catch (error) {
+    console.log(error);
     response.errMessage = error.message;
     response.message = "Failed to find monthly budget , please try again";
     res.status(400).send(response);
