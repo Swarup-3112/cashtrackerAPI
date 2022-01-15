@@ -260,30 +260,31 @@ app.get("/expense", async (req, res) => {
 });
 
 //get monthly stats
-app.get("/stats", async (req, res) => {
+app.get("/stats/:userId/:month", async (req, res) => {
   let response = {
     status: false,
     data: {
-      budget: "",
-      income: 0,
+      budget: 0,
       expense: 0,
       total: 0,
     },
   };
-  let totalPayment = 0,
-    i;
+  let totalPayment = 0, totalBudget=0, netBalance=0, i;
   try {
-    const { month, userId } = req.body;
-    const data = await Payment.find({ month }).select("amount");
-    const user = await User.find({ _id: userId }).select("income");
-    income = user.income.filter((item) => item.month === month);
-    for (i = 0; i < data.length; i++) totalPayment += data.amount;
+    const { userId, month } = req.params;
+    const data = await Payment.find({ month, createdBy: userId }).select("amount");
+    const budget = await Budget.find({ month, createdBy: userId }).select("amount");
+    for (i = 0; i < data.length; i++) totalPayment += parseInt(data[i].amount);
+    for (i = 0; i < budget.length; i++) totalBudget += budget[i].amount;
+    netBalance = totalBudget - totalPayment;
     response.status = true;
-    response.data.income = income;
-    response.data.expense = income - totalPayment;
-    response.data.total = totalPayment;
+    response.data.budget = totalBudget.toString();
+    response.data.expense = totalPayment.toString();
+    response.data.total = netBalance.toString();
+    console.log(response, "data");
     res.status(200).send(response);
   } catch (error) {
+    console.log(error, "error");
     response.errMessage = error.message;
     response.message = "Failed to find monthly stats , please try again";
     res.status(400).send(response);
@@ -291,7 +292,7 @@ app.get("/stats", async (req, res) => {
 });
 
 //get monthly expense
-app.get("/monthlyExpense", async (req, res) => {
+app.get("/monthlyExpense/:userId/:month", async (req, res) => {
   let response = {
     status: false,
     payment: [],
@@ -348,7 +349,7 @@ app.get("/monthlyExpense", async (req, res) => {
     },
   ];
   try {
-    const { month, userId } = req.body;
+    const { userId, month } = req.params;
     const payment = await Payment.find({ createdBy: userId, month }).select(
       "category amount"
     );
@@ -396,19 +397,24 @@ app.get("/monthlyExpense", async (req, res) => {
       } else if (budget[i].category === "Gift") {
         payments[5].Budget = parseInt(budget[i].amount);
         payments[5].Percentage += (payments[5].Total / budget[i].amount) * 100;
-        payments[5].Percentage += payments[5].Total / budget[i].amount;
+        payments[5].PercentageLabel += payments[5].Total / budget[i].amount;
       } else if (budget[i].category === "Money Transferred") {
         payments[6].Budget = parseInt(budget[i].amount);
         payments[6].Percentage += (payments[6].Total / budget[i].amount) * 100;
-        payments[6].Percentage += payments[6].Total / budget[i].amount;
+        payments[6].PercentageLabel += payments[6].Total / budget[i].amount;
       }
     }
 
     for (let i = 0; i < payments.length; i++) {
       if (payments[i].Budget != 0) {
+        payments[i].Total = payments[i].Total.toString();
+        payments[i].Budget = payments[i].Budget.toString();
+        payments[i].PercentageLabel = parseFloat(payments[i].PercentageLabel).toFixed(2);
+        payments[i].Percentage = payments[i].Percentage.toFixed(0).toString();
         response.payment.push(payments[i]);
       }
     }
+    console.log(response.payment);
     response.status = true;
     res.status(200).send(response);
   } catch (error) {
