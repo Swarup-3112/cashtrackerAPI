@@ -230,7 +230,7 @@ app.post("/income", async (req, res) => {
 });
 
 //get daily expense api
-app.get("/expense", async (req, res) => {
+app.get("/expense/:userId/:day", async (req, res) => {
   let response = {
     status: false,
     message: "",
@@ -240,7 +240,7 @@ app.get("/expense", async (req, res) => {
   let totalPayment = 0,
     i;
   try {
-    const { userId, day } = req.body
+    const { userId, day } = req.params;
     const data = await Payment.find({ day: day, createdBy: userId });
 
     for (i = 0; i < data.length; i++) {
@@ -249,7 +249,7 @@ app.get("/expense", async (req, res) => {
 
     response.status = true;
     response.data = data;
-    response.totalPayment = totalPayment;
+    response.totalPayment = "$"+totalPayment;
     response.message = "Success";
     console.log(response, "data");
     res.status(200).send(response);
