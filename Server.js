@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
+morgan = require('morgan')
 
 const app = express();
 app.use(express.json());
@@ -11,6 +12,7 @@ app.use(
     extended: true,
   })
 );
+morgan('dev')
 
 //models
 const Budget = require("./models/Budget");
@@ -145,8 +147,17 @@ app.post("/budget", async (req, res) => {
 
 //post payment api
 app.post("/payment", async (req, res) => {
+  console.log("payment")
   let response = { status: false, message: "" };
-  const month = [
+  const categories = [
+    { name: "Auto", icon: "assets/images/auto.png" },
+    { name: "Bank", icon: "assets/images/bank.png" },
+    { name: "Cash", icon: "assets/images/cash.png" },
+    { name: "Charity", icon: "assets/images/charity.png" },
+    { name: "Eating", icon: "assets/images/eating.png" },
+    { name: "Gift", icon: "assets/images/gift.png" },
+  ];
+  const monthConst = [
     "Jan",
     "Feb",
     "Mar",
@@ -162,31 +173,26 @@ app.post("/payment", async (req, res) => {
   ];
   try {
     const d = new Date();
-    let name = month[d.getMonth()];
-    const { category, amount, number, userId } = req.body;
-    const data = await User.findOneAndUpdate(
-      {
-        _id: userId,
-      },
-      {
-        $push: {
-          payment: {
-            category,
-            amount,
-            number,
-            month: name,
-          },
-        },
-      }
-    );
-    if (!data) {
-      response.message = "failed to add income , please try again";
-      res.status(400).send(response);
-    }
+    let day = d.getDate();
+    let month = monthConst[d.getMonth()];
+    let year = d.getFullYear();
+    const { category, amount, phone, userId } = req.body;
+    const payment = new Payment({
+      category: categories[category].name,
+      amount,
+      phone,
+      icon:categories[category].icon,
+      month,
+      day,
+      year,
+      createdBy:userId
+    });
+    await payment.save();
     response.status = true;
     response.message = "Payment created successfully";
     res.status(201).send(response);
   } catch (error) {
+    console.log(error)
     response.errMessage = error.message;
     response.message = "Failed to create payment , please try again";
     res.status(400).send(response);
@@ -198,16 +204,16 @@ app.post("/income", async (req, res) => {
   let response = { status: false, message: "" };
   try {
     const { income, userId } = req.body;
-    console.log(req.body, 'body');
+    console.log(req.body, "body");
     const data = await User.findOneAndUpdate(
       {
         _id: userId,
       },
       {
-        $set: {income: income},
+        $set: { income: income },
       }
     );
-    console.log(data, 'data')
+    console.log(data, "data");
     if (!data) {
       response.message = "failed to add income , please try again";
       res.status(400).send(response);
@@ -228,28 +234,24 @@ app.get("/expense", async (req, res) => {
   let response = {
     status: false,
     message: "",
-    data: {
-      budget: "",
-      total: 0,
-    },
+    data: [],
+    totalPayment:0
   };
-  let totalBudget = 0,
+  let totalPayment = 0,
     i;
   try {
-    // const { date } = req.body
-    userId = "61e137d188086b0f5577acdc"; // Todo: body mai lelo
-    let today = new Date().toISOString().slice(0, 10);
-    const data = await Budget.find({ date: today, createdBy: userId }).select(
-      "category amount"
-    );
+    const { userId, day } = req.body
+    const data = await Payment.find({ day: day, createdBy: userId });
+
     for (i = 0; i < data.length; i++) {
-      totalBudget += data[i].amount;
+      totalPayment += parseInt(data[i].amount);
     }
+
     response.status = true;
-    response.data.budget = data;
-    response.data.total = totalBudget;
-    response.message = "Budget created successfully";
-    console.log(response.data, "data");
+    response.data = data;
+    response.totalPayment = totalPayment;
+    response.message = "Success";
+    console.log(response, "data");
     res.status(200).send(response);
   } catch (error) {
     console.log(error, "error");
