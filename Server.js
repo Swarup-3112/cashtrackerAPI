@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
-morgan = require('morgan')
+morgan = require("morgan");
 
 const app = express();
 app.use(express.json());
@@ -12,7 +12,7 @@ app.use(
     extended: true,
   })
 );
-morgan('dev')
+morgan("dev");
 
 //models
 const Budget = require("./models/Budget");
@@ -57,7 +57,7 @@ app.post("/signup", async (req, res) => {
 
 //login post
 app.post("/signIn", async (req, res) => {
-  console.log('route hit ho')
+  console.log("route hit ho");
   let response = { status: false, message: "", data: {} };
   const { email, password } = req.body;
   await User.findOne({ email })
@@ -147,7 +147,7 @@ app.post("/budget", async (req, res) => {
 
 //post payment api
 app.post("/payment", async (req, res) => {
-  console.log("payment")
+  console.log("payment");
   let response = { status: false, message: "" };
   const categories = [
     { name: "Auto", icon: "assets/images/auto.png" },
@@ -156,6 +156,7 @@ app.post("/payment", async (req, res) => {
     { name: "Charity", icon: "assets/images/charity.png" },
     { name: "Eating", icon: "assets/images/eating.png" },
     { name: "Gift", icon: "assets/images/gift.png" },
+    { name: "Money Transferred", icon: "assets/images/gift.png" },
   ];
   const monthConst = [
     "Jan",
@@ -181,18 +182,18 @@ app.post("/payment", async (req, res) => {
       category: categories[category].name,
       amount,
       phone,
-      icon:categories[category].icon,
+      icon: categories[category].icon,
       month,
       day,
       year,
-      createdBy:userId
+      createdBy: userId,
     });
     await payment.save();
     response.status = true;
     response.message = "Payment created successfully";
     res.status(201).send(response);
   } catch (error) {
-    console.log(error)
+    console.log(error);
     response.errMessage = error.message;
     response.message = "Failed to create payment , please try again";
     res.status(400).send(response);
@@ -205,15 +206,12 @@ app.post("/income", async (req, res) => {
   try {
     const { income, userId } = req.body;
     console.log(req.body, "body");
-    const data = await User.findOneAndUpdate(
-      {
-        _id: userId,
-      },
-      {
-        $set: { income: income },
-      }
-    );
-    console.log(data, "data");
+    const data = await User.findOne({
+      _id: userId,
+    });
+    data.income += `+${income}`;
+    data.income = eval(data.income);
+    await data.save();
     if (!data) {
       response.message = "failed to add income , please try again";
       res.status(400).send(response);
@@ -235,12 +233,12 @@ app.get("/expense", async (req, res) => {
     status: false,
     message: "",
     data: [],
-    totalPayment:0
+    totalPayment: 0,
   };
   let totalPayment = 0,
     i;
   try {
-    const { userId, day } = req.body
+    const { userId, day } = req.body;
     const data = await Payment.find({ day: day, createdBy: userId });
 
     for (i = 0; i < data.length; i++) {
