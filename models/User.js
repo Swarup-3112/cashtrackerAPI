@@ -11,20 +11,18 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    password: {
+      type: String,
+      required: true,
+    }, 
     phNumber: {
-      type: Number,
+      type: String,
       required: true,
     },
-    income: [
-      {
-        month: {
-          type: String,
-        },
-        salary: {
-          type: String,
-        },
-      },
-    ],
+    income: {
+      type: String,
+      default: 0,
+    },
     payment: [
       {
         category: {

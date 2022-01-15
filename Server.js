@@ -55,16 +55,15 @@ app.post("/signup", async (req, res) => {
 
 //login post
 app.post("/signIn", async (req, res) => {
-  let response = { status: false, message: "" };
+  let response = { status: false, message: "", data: {} };
   const { email, password } = req.body;
-  await User.find({ email })
+  await User.findOne({ email })
     .then((data) => {
-      if (data == undefined) {
-        response.message = "Failed to signIn , please try again";
-        return res.status(400).send(response);
-      }
-      if (password === data.password) {
+      console.log(data);
+      if (password == data.password) {
+        response.status = true;
         response.message = "login successful";
+        response.data = data;
         return res.status(200).send(response);
       } else {
         response.message = "incorrect password , please try again";
@@ -78,14 +77,14 @@ app.post("/signIn", async (req, res) => {
 });
 
 //get profile
-app.get("/", async (req, res) => {
+app.get("/user/:userId", async (req, res) => {
   let response = {
     status: false,
     data: "",
   };
   try {
-    // const { date } = req.body
-    userId = "61e137d188086b0f5577acdc"; // Todo: body mai lelo
+    const { userId } = req.params;
+    // userId = "61e137d188086b0f5577acdc"; // Todo: body mai lelo
     const data = await User.findOne({ _id: userId });
     if (data) {
       response.status = true;
@@ -195,23 +194,20 @@ app.post("/payment", async (req, res) => {
 });
 
 //post income api
-app.put("/income", async (req, res) => {
+app.post("/income", async (req, res) => {
   let response = { status: false, message: "" };
   try {
-    const { salary, month, userId } = req.body;
+    const { income, userId } = req.body;
+    console.log(req.body, 'body');
     const data = await User.findOneAndUpdate(
       {
         _id: userId,
       },
       {
-        $push: {
-          income: {
-            month,
-            salary,
-          },
-        },
+        $set: {income: income},
       }
     );
+    console.log(data, 'data')
     if (!data) {
       response.message = "failed to add income , please try again";
       res.status(400).send(response);
@@ -222,12 +218,13 @@ app.put("/income", async (req, res) => {
   } catch (error) {
     response.errMessage = error.message;
     response.message = "Failed to create , please try again";
+    console.log(error);
     res.status(400).send(response);
   }
 });
 
 //get daily expense api
-app.get("/", async (req, res) => {
+app.get("/expense", async (req, res) => {
   let response = {
     status: false,
     message: "",
@@ -263,7 +260,7 @@ app.get("/", async (req, res) => {
 });
 
 //get monthly stats
-app.get("/", async (req, res) => {
+app.get("/stats", async (req, res) => {
   let response = {
     status: false,
     data: {
@@ -294,7 +291,7 @@ app.get("/", async (req, res) => {
 });
 
 //get monthly expense
-app.get("/", async (req, res) => {
+app.get("/monthlyExpense", async (req, res) => {
   let response = {
     status: false,
     data: {
