@@ -339,6 +339,13 @@ app.get("/monthlyExpense", async (req, res) => {
       PercentageLabel: 0,
       Budget: 0,
     },
+    {
+      category: "Money Transferred",
+      Total: 0,
+      Percentage: 0,
+      PercentageLabel: 0,
+      Budget: 0,
+    },
   ];
   try {
     const { month, userId } = req.body;
@@ -361,6 +368,8 @@ app.get("/monthlyExpense", async (req, res) => {
         payments[4].Total += parseInt(payment[i].amount);
       } else if (payment[i].category === "Gift") {
         payments[5].Total += parseInt(payment[i].amount);
+      } else if (payment[i].category === "Money Transferred") {
+        payments[6].Total += parseInt(payment[i].amount);
       }
     }
     for (let i = 0; i < budget.length; i++) {
@@ -388,6 +397,10 @@ app.get("/monthlyExpense", async (req, res) => {
         payments[5].Budget = parseInt(budget[i].amount);
         payments[5].Percentage += (payments[5].Total / budget[i].amount) * 100;
         payments[5].Percentage += payments[5].Total / budget[i].amount;
+      } else if (budget[i].category === "Money Transferred") {
+        payments[6].Budget = parseInt(budget[i].amount);
+        payments[6].Percentage += (payments[6].Total / budget[i].amount) * 100;
+        payments[6].Percentage += payments[6].Total / budget[i].amount;
       }
     }
 
