@@ -57,6 +57,7 @@ app.post("/signup", async (req, res) => {
 
 //login post
 app.post("/signIn", async (req, res) => {
+  console.log('route hit ho')
   let response = { status: false, message: "", data: {} };
   const { email, password } = req.body;
   await User.findOne({ email })
@@ -104,9 +105,9 @@ app.get("/user/:userId", async (req, res) => {
 });
 
 //post budget api
-app.post("/budget", (req, res) => {
+app.post("/budget", async (req, res) => {
   let response = { status: false, message: "" };
-  const month = [
+  const months = [
     "Jan",
     "Feb",
     "Mar",
@@ -122,19 +123,18 @@ app.post("/budget", (req, res) => {
   ];
   try {
     const d = new Date();
-    let name = month[d.getMonth()];
+    let month = months[d.getMonth()];
     let year = d.getFullYear();
-    const { category, amount } = req.body;
-    userId = "61e137d188086b0f5577acdc"; // Todo: body mai lelo
+    const { category, amount, userId } = req.body;
     const data = new Budget({
       category,
       amount,
       createdBy: userId,
-      month: name,
       date: new Date().toISOString().slice(0, 10),
+      month,
       year,
     });
-    data.save();
+    await data.save();
     response.status = true;
     response.message = "Budget created successfully";
     return res.status(201).send(response);
