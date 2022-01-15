@@ -7,13 +7,26 @@ const paymentSchema = new mongoose.Schema(
       required: true,
     },
     amount: {
-      type: Number,
+      type: String,
       required: true,
     },
-    number: {
-      type: Number,
+    phone: {
+      type: String,
+      required: true,
+    },
+    icon: {
+      type: String,
+      required: true,
     },
     month: {
+      type: String,
+      required: true,
+    },
+    day: {
+      type: String,
+      required: true,
+    },
+    year: {
       type: String,
       required: true,
     },
